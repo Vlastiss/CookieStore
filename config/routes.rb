@@ -1,4 +1,10 @@
 Rails.application.routes.draw do
+  get "payments/create"
+  get "orders/new"
+  get "orders/create"
+  get "orders/show"
+  get "cookies/index"
+  get "cookies/show"
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
