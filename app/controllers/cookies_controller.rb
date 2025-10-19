@@ -4,5 +4,6 @@ class CookiesController < ApplicationController
   end
 
   def show
+    @cookie = Cookie.find(params[:id])
   end
 end
