@@ -14,3 +14,8 @@
 # ActiveSupport::Inflector.inflections(:en) do |inflect|
 #   inflect.acronym "RESTful"
 # end
+
+# Custom inflections for box_cookie
+ActiveSupport::Inflector.inflections(:en) do |inflect|
+  inflect.irregular "box_cookie", "box_cookies"
+end

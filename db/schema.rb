@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_17_053746) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_20_164505) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -52,6 +52,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_17_053746) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "box_cookies", force: :cascade do |t|
+    t.bigint "order_item_id", null: false
+    t.bigint "cookie_id", null: false
+    t.integer "quantity"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["cookie_id"], name: "index_box_cookies_on_cookie_id"
+    t.index ["order_item_id"], name: "index_box_cookies_on_order_item_id"
+  end
+
   create_table "cookies", force: :cascade do |t|
     t.string "name"
     t.text "description"
@@ -77,11 +87,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_17_053746) do
 
   create_table "order_items", force: :cascade do |t|
     t.bigint "order_id", null: false
-    t.bigint "cookie_id", null: false
-    t.integer "quantity"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["cookie_id"], name: "index_order_items_on_cookie_id"
+    t.string "box_size", null: false
+    t.decimal "box_price", precision: 10, scale: 2
     t.index ["order_id"], name: "index_order_items_on_order_id"
   end
 
@@ -115,7 +124,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_17_053746) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "order_items", "cookies", column: "cookie_id"
+  add_foreign_key "box_cookies", "cookies", column: "cookie_id"
+  add_foreign_key "box_cookies", "order_items"
   add_foreign_key "order_items", "orders"
   add_foreign_key "orders", "delivery_options"
   add_foreign_key "orders", "users"

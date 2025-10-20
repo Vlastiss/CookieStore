@@ -29,11 +29,30 @@
 
     <% if @order.order_items.any? %>
       <div class="mt-6">
-        <h3 class="text-xl font-semibold mb-3">Order Items</h3>
-        <div class="space-y-2">
-          <% @order.order_items.each do |item| %>
-            <div class="border-b pb-2">
-              <p><strong><%= item.cookie.name %></strong> - Quantity: <%= item.quantity %> - $<%= item.price %></p>
+        <h3 class="text-xl font-semibold mb-4">Cookie Boxes</h3>
+        <div class="space-y-4">
+          <% @order.order_items.each_with_index do |box, index| %>
+            <div class="border-2 border-gray-300 rounded-lg p-4 bg-gray-50">
+              <div class="flex justify-between items-center mb-3">
+                <h4 class="text-lg font-semibold text-gray-800">
+                  Box #<%= index + 1 %> - <%= box.box_size.capitalize %>
+                </h4>
+                <span class="text-lg font-bold text-blue-600">$<%= box.box_price %></span>
+              </div>
+              
+              <div class="bg-white rounded p-3">
+                <p class="text-sm font-medium text-gray-600 mb-2">Box Contents (<%= box.capacity %> cookies):</p>
+                <ul class="space-y-1">
+                  <% box.box_cookies.each do |box_cookie| %>
+                    <li class="flex justify-between text-sm">
+                      <span class="text-gray-700">
+                        <span class="font-medium"><%= box_cookie.cookie.name %></span>
+                      </span>
+                      <span class="text-gray-600">× <%= box_cookie.quantity %></span>
+                    </li>
+                  <% end %>
+                </ul>
+              </div>
             </div>
           <% end %>
         </div>

@@ -1,4 +1,475 @@
-<div>
-  <h1 class="font-bold text-4xl">Orders#new</h1>
-  <p>Find me in app/views/orders/new.html.erb</p>
+<div class="container mx-auto px-4 py-8 max-w-6xl">
+  <h1 class="text-4xl font-bold text-gray-800 mb-8">Create Your Cookie Box Order</h1>
+
+  <%= form_with(model: @order, local: true, html: { id: 'order-form', class: 'space-y-8', onsubmit: 'filterEmptyCookies()' }) do |form| %>
+    
+    <!-- Display Errors -->
+    <% if @order.errors.any? %>
+      <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-red-800">There were <%= pluralize(@order.errors.count, "error") %> with your order:</h3>
+            <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+              <% @order.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Customer Information -->
+    <div class="bg-white shadow-md rounded-lg p-6">
+      <h2 class="text-2xl font-semibold text-gray-800 mb-4">Customer Information</h2>
+      
+      <div class="space-y-4">
+        <div>
+          <%= form.label :user_id, "Select Customer", class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= form.collection_select :user_id, User.all, :id, :name, 
+              { prompt: "Choose a customer..." }, 
+              { class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Box Builder Section -->
+    <div class="bg-white shadow-md rounded-lg p-6">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-semibold text-gray-800">Build Your Cookie Boxes</h2>
+        <button type="button" id="add-box-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition duration-150 ease-in-out">
+          + Add Box
+        </button>
+      </div>
+
+      <div id="boxes-container" class="space-y-6">
+        <!-- Boxes will be dynamically added here -->
+      </div>
+
+      <div id="no-boxes-message" class="text-center py-8 text-gray-500">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+        </svg>
+        <p class="mt-2 text-lg">No boxes yet. Click "Add Box" to get started!</p>
+      </div>
+    </div>
+
+    <!-- Delivery Options -->
+    <div class="bg-white shadow-md rounded-lg p-6">
+      <h2 class="text-2xl font-semibold text-gray-800 mb-4">Delivery Method</h2>
+      
+      <div class="space-y-3">
+        <% @delivery_options.each do |delivery_option| %>
+          <label class="flex items-center p-4 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition">
+            <%= form.radio_button :delivery_option_id, delivery_option.id, 
+                class: "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300",
+                data: { price: delivery_option.price },
+                onchange: "updateOrderTotal()" %>
+            <span class="ml-3 flex-1">
+              <span class="block text-sm font-medium text-gray-900"><%= delivery_option.name %></span>
+            </span>
+            <span class="text-sm font-semibold text-gray-900">$<%= delivery_option.price %></span>
+          </label>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 shadow-md rounded-lg p-6">
+      <h2 class="text-2xl font-semibold text-gray-800 mb-4">Order Summary</h2>
+      
+      <div class="space-y-3">
+        <div class="flex justify-between text-gray-700">
+          <span>Boxes Subtotal:</span>
+          <span class="font-semibold" id="boxes-subtotal">$0.00</span>
+        </div>
+        <div class="flex justify-between text-gray-700">
+          <span>Delivery:</span>
+          <span class="font-semibold" id="delivery-cost">$0.00</span>
+        </div>
+        <div class="border-t border-gray-300 pt-3 flex justify-between text-xl font-bold text-gray-900">
+          <span>Total:</span>
+          <span id="total-price">$0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="flex justify-end">
+      <%= form.submit "Place Order", 
+          class: "bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition duration-150 ease-in-out text-lg",
+          id: "submit-order-btn" %>
+    </div>
+  <% end %>
 </div>
+
+<!-- Box Template (Hidden) -->
+<template id="box-template">
+  <div class="box-item border-2 border-gray-300 rounded-lg p-6 bg-gray-50" data-box-index="">
+    <div class="flex justify-between items-start mb-4">
+      <h3 class="text-xl font-semibold text-gray-800">Box <span class="box-number"></span></h3>
+      <button type="button" class="remove-box-btn text-red-600 hover:text-red-800 font-medium">
+        ✕ Remove
+      </button>
+    </div>
+
+    <!-- Box Size Selection -->
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-2">Box Size</label>
+      <select name="order[order_items_attributes][INDEX][box_size]" 
+              class="box-size-select w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required>
+        <option value="">Select a size...</option>
+        <% @box_options.each do |size, details| %>
+          <option value="<%= size %>" data-capacity="<%= details[:capacity] %>" data-price="<%= details[:price] %>">
+            <%= size.capitalize %> - <%= details[:capacity] %> cookies - $<%= details[:price] %>
+          </option>
+        <% end %>
+      </select>
+      <input type="hidden" name="order[order_items_attributes][INDEX][box_price]" class="box-price-input" value="">
+    </div>
+
+    <!-- Cookie Counter -->
+    <div class="mb-4 p-3 bg-white rounded-lg border border-gray-200">
+      <div class="flex justify-between items-center">
+        <span class="text-sm font-medium text-gray-700">Cookies Selected:</span>
+        <span class="cookie-counter text-lg font-bold" data-current="0" data-capacity="0">
+          <span class="current-count text-blue-600">0</span> / <span class="capacity-count text-gray-600">0</span>
+        </span>
+      </div>
+      <div class="mt-2">
+        <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div class="cookie-progress-bar h-full bg-blue-600 transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cookie Selection -->
+    <div class="cookies-container hidden">
+      <label class="block text-sm font-medium text-gray-700 mb-3">Select Your Cookies</label>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <% @cookies.each_with_index do |cookie, cookie_index| %>
+          <div class="cookie-selection-item p-3 border border-gray-300 rounded-lg bg-white">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-medium text-gray-800 text-sm"><%= cookie.name %></span>
+              <span class="text-xs text-gray-500">$<%= cookie.price %></span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button type="button" class="cookie-decrease bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1 px-3 rounded">−</button>
+              <input type="number" 
+                     name="order[order_items_attributes][INDEX][box_cookies_attributes][COOKIE_INDEX][quantity]" 
+                     class="cookie-quantity-input w-16 text-center border border-gray-300 rounded py-1"
+                     value="0"
+                     min="0"
+                     readonly
+                     data-cookie-id="<%= cookie.id %>"
+                     data-cookie-index="<%= cookie_index %>">
+              <input type="hidden" 
+                     name="order[order_items_attributes][INDEX][box_cookies_attributes][COOKIE_INDEX][cookie_id]" 
+                     value="<%= cookie.id %>">
+              <button type="button" class="cookie-increase bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded">+</button>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+  (function() {
+    let boxCounter = 0;
+
+    // Box options data
+    const boxOptions = <%= raw @box_options.to_json %>;
+
+    // Add Box functionality
+    document.getElementById('add-box-btn').addEventListener('click', function() {
+      addBox();
+    });
+
+    function addBox() {
+      const template = document.getElementById('box-template');
+      const boxesContainer = document.getElementById('boxes-container');
+      const noBoxesMessage = document.getElementById('no-boxes-message');
+      
+      // Clone template
+      const boxElement = template.content.cloneNode(true);
+      const boxDiv = boxElement.querySelector('.box-item');
+      
+      // Calculate the next box number based on existing boxes
+      const currentBoxCount = boxesContainer.children.length;
+      const nextBoxNumber = currentBoxCount + 1;
+      
+      // Set box index and number
+      boxDiv.setAttribute('data-box-index', boxCounter);
+      boxDiv.querySelector('.box-number').textContent = nextBoxNumber;
+      
+      // Replace INDEX placeholder in all name attributes
+      boxDiv.querySelectorAll('[name*="INDEX"]').forEach(input => {
+        input.name = input.name.replace('INDEX', boxCounter);
+      });
+      
+      // Replace COOKIE_INDEX placeholder for cookie inputs
+      boxDiv.querySelectorAll('[name*="COOKIE_INDEX"]').forEach(input => {
+        const cookieIndex = input.dataset.cookieIndex || input.closest('.cookie-selection-item').querySelector('[data-cookie-index]').dataset.cookieIndex;
+        input.name = input.name.replace('COOKIE_INDEX', cookieIndex);
+      });
+      
+      // Add event listeners
+      setupBoxEventListeners(boxDiv);
+      
+      // Append to container
+      boxesContainer.appendChild(boxDiv);
+      
+      // Hide no boxes message
+      noBoxesMessage.classList.add('hidden');
+      
+      boxCounter++;
+    }
+
+    function setupBoxEventListeners(boxDiv) {
+      const boxIndex = boxDiv.getAttribute('data-box-index');
+      
+      // Remove box button
+      boxDiv.querySelector('.remove-box-btn').addEventListener('click', function() {
+        boxDiv.remove();
+        renumberBoxes();
+        checkIfNoBoxes();
+        updateOrderTotal();
+      });
+      
+      // Box size selection
+      const boxSizeSelect = boxDiv.querySelector('.box-size-select');
+      boxSizeSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const capacity = selectedOption.dataset.capacity;
+        const price = selectedOption.dataset.price;
+        
+        // Update capacity display
+        boxDiv.querySelector('.capacity-count').textContent = capacity || 0;
+        boxDiv.querySelector('.cookie-counter').setAttribute('data-capacity', capacity || 0);
+        
+        // Update hidden price input
+        boxDiv.querySelector('.box-price-input').value = price || '';
+        
+        // Show/hide cookie selection
+        const cookiesContainer = boxDiv.querySelector('.cookies-container');
+        if (capacity) {
+          cookiesContainer.classList.remove('hidden');
+        } else {
+          cookiesContainer.classList.add('hidden');
+        }
+        
+        // Reset cookie selections
+        boxDiv.querySelectorAll('.cookie-quantity-input').forEach(input => {
+          input.value = 0;
+        });
+        updateCookieCounter(boxDiv);
+        updateOrderTotal();
+      });
+      
+      // Cookie increase/decrease buttons
+      boxDiv.querySelectorAll('.cookie-increase').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const input = this.parentElement.querySelector('.cookie-quantity-input');
+          const currentValue = parseInt(input.value) || 0;
+          const capacity = parseInt(boxDiv.querySelector('.cookie-counter').dataset.capacity) || 0;
+          const currentTotal = getCurrentCookieCount(boxDiv);
+          
+          if (currentTotal < capacity) {
+            input.value = currentValue + 1;
+            updateCookieCounter(boxDiv);
+          }
+        });
+      });
+      
+      boxDiv.querySelectorAll('.cookie-decrease').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const input = this.parentElement.querySelector('.cookie-quantity-input');
+          const currentValue = parseInt(input.value) || 0;
+          
+          if (currentValue > 0) {
+            input.value = currentValue - 1;
+            updateCookieCounter(boxDiv);
+          }
+        });
+      });
+    }
+
+    function getCurrentCookieCount(boxDiv) {
+      let total = 0;
+      boxDiv.querySelectorAll('.cookie-quantity-input').forEach(input => {
+        total += parseInt(input.value) || 0;
+      });
+      return total;
+    }
+
+    function updateCookieCounter(boxDiv) {
+      const capacity = parseInt(boxDiv.querySelector('.cookie-counter').dataset.capacity) || 0;
+      const currentCount = getCurrentCookieCount(boxDiv);
+      
+      boxDiv.querySelector('.current-count').textContent = currentCount;
+      boxDiv.querySelector('.cookie-counter').setAttribute('data-current', currentCount);
+      
+      // Update progress bar
+      const percentage = capacity > 0 ? (currentCount / capacity) * 100 : 0;
+      const progressBar = boxDiv.querySelector('.cookie-progress-bar');
+      progressBar.style.width = percentage + '%';
+      
+      // Change color based on status
+      if (currentCount === capacity) {
+        progressBar.classList.remove('bg-blue-600', 'bg-yellow-500');
+        progressBar.classList.add('bg-green-600');
+      } else if (currentCount > capacity) {
+        progressBar.classList.remove('bg-blue-600', 'bg-green-600');
+        progressBar.classList.add('bg-red-600');
+      } else {
+        progressBar.classList.remove('bg-green-600', 'bg-red-600');
+        progressBar.classList.add('bg-blue-600');
+      }
+      
+      updateOrderTotal();
+    }
+
+    function renumberBoxes() {
+      const boxesContainer = document.getElementById('boxes-container');
+      const boxes = boxesContainer.querySelectorAll('.box-item');
+      
+      boxes.forEach((box, index) => {
+        const boxNumber = index + 1;
+        box.querySelector('.box-number').textContent = boxNumber;
+      });
+    }
+
+    function checkIfNoBoxes() {
+      const boxesContainer = document.getElementById('boxes-container');
+      const noBoxesMessage = document.getElementById('no-boxes-message');
+      
+      if (boxesContainer.children.length === 0) {
+        noBoxesMessage.classList.remove('hidden');
+      }
+    }
+
+    function updateOrderTotal() {
+      let boxesSubtotal = 0;
+      
+      // Calculate boxes subtotal
+      document.querySelectorAll('.box-price-input').forEach(input => {
+        const price = parseFloat(input.value) || 0;
+        boxesSubtotal += price;
+      });
+      
+      // Get delivery cost - improved method
+      const deliveryRadio = document.querySelector('input[name="order[delivery_option_id]"]:checked');
+      let deliveryCost = 0;
+      
+      if (deliveryRadio) {
+        // Try to get price from data attribute first
+        const priceAttr = deliveryRadio.getAttribute('data-price');
+        if (priceAttr) {
+          deliveryCost = parseFloat(priceAttr) || 0;
+        } else {
+          // Fallback: extract from the label text
+          const deliveryLabel = deliveryRadio.closest('label');
+          if (deliveryLabel) {
+            const priceSpan = deliveryLabel.querySelector('span:last-child');
+            if (priceSpan) {
+              const priceText = priceSpan.textContent.trim();
+              const priceMatch = priceText.match(/\$(\d+\.?\d*)/);
+              if (priceMatch) {
+                deliveryCost = parseFloat(priceMatch[1]) || 0;
+              }
+            }
+          }
+        }
+      }
+      
+      // Calculate total
+      const total = boxesSubtotal + deliveryCost;
+      
+      // Update display
+      document.getElementById('boxes-subtotal').textContent = '$' + boxesSubtotal.toFixed(2);
+      document.getElementById('delivery-cost').textContent = '$' + deliveryCost.toFixed(2);
+      document.getElementById('total-price').textContent = '$' + total.toFixed(2);
+    }
+
+    // Filter out empty cookies before form submission
+    function filterEmptyCookies() {
+      console.log('Filtering empty cookies...');
+      
+      // Process each box individually
+      document.querySelectorAll('.box-item').forEach((box, boxIndex) => {
+        console.log(`Processing box ${boxIndex + 1}`);
+        const cookieInputs = box.querySelectorAll('.cookie-quantity-input');
+        let hasValidCookies = false;
+        
+        cookieInputs.forEach(input => {
+          console.log(`Cookie input value: ${input.value}, name: ${input.name}`);
+          if (parseInt(input.value) === 0) {
+            console.log('Removing empty cookie input and its cookie_id');
+            // Find the corresponding cookie_id hidden input BEFORE removing the quantity input
+            const parentDiv = input.closest('.cookie-selection-item');
+            let cookieIdInput = null;
+            if (parentDiv) {
+              cookieIdInput = parentDiv.querySelector('input[type="hidden"]');
+            }
+            
+            // Remove the quantity input
+            input.remove();
+            
+            // Remove the corresponding cookie_id hidden input
+            if (cookieIdInput) {
+              console.log('Removing cookie_id input');
+              cookieIdInput.remove();
+            }
+          } else {
+            hasValidCookies = true;
+            console.log(`Valid cookie found: ${input.value}`);
+          }
+        });
+        
+        // If no valid cookies in this box, mark it for destruction
+        if (!hasValidCookies) {
+          console.log('No valid cookies in box, marking for destruction');
+          const boxSizeInput = box.querySelector('.box-size-select');
+          if (boxSizeInput) {
+            const destroyInput = document.createElement('input');
+            destroyInput.type = 'hidden';
+            destroyInput.name = boxSizeInput.name.replace('[box_size]', '[_destroy]');
+            destroyInput.value = '1';
+            box.appendChild(destroyInput);
+          }
+        }
+      });
+      
+      console.log('Filtering complete');
+    }
+
+    // Make functions globally accessible for HTML attributes
+    window.updateOrderTotal = updateOrderTotal;
+    window.filterEmptyCookies = filterEmptyCookies;
+
+    // Initialize with one box
+    document.addEventListener('DOMContentLoaded', function() {
+      addBox();
+    });
+  })();
+</script>
+
+<style>
+  .cookie-quantity-input::-webkit-outer-spin-button,
+  .cookie-quantity-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  
+  .cookie-quantity-input {
+    -moz-appearance: textfield;
+  }
+</style>
