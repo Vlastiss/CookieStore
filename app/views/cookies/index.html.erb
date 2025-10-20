@@ -1,11 +1,12 @@
-<div>
+<div class="container mx-auto px-4 py-8">
   <h1 class="font-bold text-4xl">Cookies</h1>
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
     <% @cookies.each do |cookie| %>
-      <div class="bg-white shadow-md rounded-lg p-6">
+      <div class="bg-white shadow-md rounded-lg p-6 hover:shadow-lg transition-shadow duration-300">
+        <%= link_to cooky_path(cookie) do %>
         <%= cookie.name %>
-        <%= cookie.description %>
-        <%= cookie.price %>
+
+        <% end %>
       </div>
     <% end %>
   </div>

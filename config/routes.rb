@@ -1,5 +1,5 @@
 Rails.application.routes.draw do
-  root "cookies#index"
+  root "pages#home"
   resources :cookies, only: [:index, :show]
   resources :orders, only: [:new, :create, :show]
   resources :payments, only: [:create]
